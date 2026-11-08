@@ -1,0 +1,43 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: 저장소 체크아웃
+      uses: actions/checkout@v4
+
+    - name: Python 3.11 설정
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: 의존성 설치
+      run: |
+        python -m pip install --upgrade pip
+        pip install ursina pyinstaller pyarmor
+
+    - name: PyArmor 난독화
+      run: |
+        pyarmor gen -O dist_obf FPS.py
+
+    - name: PyInstaller exe 패키징
+      run: |
+        pyinstaller --noconsole --onefile `
+          --collect-all ursina `
+          --add-data "dist_obf/pyarmor_runtime_*:." `
+          --distpath ./release `
+          dist_obf/FPS.py
+
+    - name: exe 결과물 업로드
+      uses: actions/upload-artifact@v4
+      with:
+        name: FPS-Game-Windows
+        path: release/*.exe
+        retention-days: 7
