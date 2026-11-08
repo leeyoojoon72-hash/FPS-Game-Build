@@ -23,6 +23,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install ursina pyinstaller pyarmor
 
+    - name: 소스와 필수 리소스 확인
+      run: |
+        python -m py_compile FPS.py
+        python -c "from pathlib import Path; files = ['blaster_kit/blaster-a.obj', 'blaster_kit/blaster-b.obj', 'blaster_kit/blaster-e.obj', 'blaster_kit/target-large.obj', 'blaster_kit/Textures/colormap.png', 'block_zombie/zombie.obj', 'block_zombie/palette.png']; missing = [p for p in files if not (Path('assets') / p).is_file()]; assert not missing, missing"
+
     - name: PyArmor 난독화
       run: |
         pyarmor gen -O dist_obf FPS.py
@@ -31,6 +36,7 @@ jobs:
       run: |
         pyinstaller --noconsole --onefile `
           --collect-all ursina `
+          --add-data "assets:assets" `
           --add-data "dist_obf/pyarmor_runtime_*:." `
           --distpath ./release `
           dist_obf/FPS.py
@@ -40,4 +46,5 @@ jobs:
       with:
         name: FPS-Game-Windows
         path: release/*.exe
+        if-no-files-found: error
         retention-days: 7

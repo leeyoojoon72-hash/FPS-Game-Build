@@ -122,7 +122,9 @@ ground = Entity(model='cube', scale=(100, 1, 100), y=-0.5,
                 texture='white_cube', texture_scale=(100, 100), collider='box')
 Sky()
 
-asset_dir = Path(__file__).resolve().parent / 'assets' / 'blaster_kit'
+# PyInstaller extracts bundled resources into _MEIPASS.
+resource_dir = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parent))
+asset_dir = resource_dir / 'assets' / 'blaster_kit'
 palette = load_texture('colormap.png', folder=asset_dir / 'Textures')
 weapons = {
     '1': dict(name='RIFLE', model='blaster-a', interval=0.10, damage=25,
@@ -175,7 +177,7 @@ enemies = []
 class Zombie(Entity):
     def __init__(self, position):
         super().__init__(name='zombie', model=copy(zombie_model), texture=zombie_texture,
-                         position=position)
+                         position=position, collider='box')
         self.health = 100
         self.attack_at = 0
         self.speed = random.uniform(1.4, 2.1)
@@ -342,7 +344,11 @@ def update():
 def input(key):
     if game_over:
         if key == 'r':
-            os.execl(sys.executable, sys.executable, str(Path(__file__).resolve()))
+            if getattr(sys, 'frozen', False):
+                os.environ['PYINSTALLER_RESET_ENVIRONMENT'] = '1'
+                os.execl(sys.executable, sys.executable)
+            else:
+                os.execl(sys.executable, sys.executable, str(Path(__file__).resolve()))
         return
     if key in weapons:
         select_weapon(key)
